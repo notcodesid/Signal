@@ -22,6 +22,8 @@ export default defineManifest({
     "storage",
     "activeTab",
     "scripting",
+    "alarms",
+    "notifications",
   ],
   // host_permissions: <all_urls> is required for chrome.scripting.executeScript
   // to inject the Phantom bridge into the active tab from the side panel

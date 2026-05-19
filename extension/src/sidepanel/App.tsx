@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { Chat } from "./Chat";
+import { AlertsBell } from "./AlertsBell";
 import { usePhantom } from "@/lib/usePhantom";
 import { usePageContext } from "@/lib/usePageContext";
+import { setWatchedAddress } from "@/lib/watches";
 
 function truncate(addr: string): string {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
@@ -11,6 +14,25 @@ export function App() {
     usePhantom();
   const pageContext = usePageContext();
 
+  // Tell the background watcher which address to track. Switching wallets
+  // resets the lamport baseline so we don't fire a phantom "balance changed"
+  // alert just because we connected a different wallet.
+  useEffect(() => {
+    void setWatchedAddress(publicKey);
+  }, [publicKey]);
+
+  // Ask the background to run a balance check immediately when the side
+  // panel opens. Gives the user fast feedback without waiting for the
+  // next 2-minute alarm tick.
+  useEffect(() => {
+    if (!publicKey) return;
+    chrome.runtime
+      .sendMessage({ type: "signal:checkNow" })
+      .catch(() => {
+        // Service worker may be cold-starting; the next alarm will catch it.
+      });
+  }, [publicKey]);
+
   return (
     <div className="flex flex-col h-full p-3 gap-3 bg-black text-gray-100">
       <header className="flex items-center gap-2 px-1">
@@ -18,6 +40,7 @@ export function App() {
         <h1 className="text-sm font-semibold tracking-tight">Signal</h1>
 
         <div className="ml-auto flex items-center gap-2">
+          <AlertsBell />
           {publicKey ? (
             <>
               <span
@@ -45,8 +68,6 @@ export function App() {
         </div>
       </header>
 
-      {/* Page-context badge: only show when we're on a known DeFi site, to
-          avoid clutter on every random tab. */}
       {pageContext.protocol && (
         <div
           className="mx-1 flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200"
