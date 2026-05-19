@@ -5,21 +5,28 @@ import {
   getToolName,
   type UIMessage,
 } from "ai";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  SwapApprovalCard,
+  type SwapPreview,
+} from "./SwapApprovalCard";
+import {
+  TransferApprovalCard,
+  type TransferPreview,
+} from "./TransferApprovalCard";
 
-// In dev the backend lives on the user's local Next.js server. Phase 6f
-// will swap this for the deployed Vercel URL. We hard-code the absolute URL
-// here because extensions don't share an origin with the backend.
 const BACKEND_URL = "http://localhost:3000/api/chat";
-
 const STORAGE_KEY = "signal-ext:chat:v1";
 
 const SUGGESTED_PROMPTS = [
+  "What's my SOL balance?",
   "Show me top stablecoin yields above $10M TVL",
   "What's the current Marinade staking APY?",
-  "Quote 0.1 SOL to USDC",
-  "What are the safest yields right now?",
+  "Send 0.001 SOL to 1nc1nerator11111111111111111111111111111111",
 ];
+
+type SwapToolOutput = { preview: SwapPreview; txBase64: string };
+type TransferToolOutput = { preview: TransferPreview; txBase64: string };
 
 function loadStored(): UIMessage[] {
   try {
@@ -32,17 +39,22 @@ function loadStored(): UIMessage[] {
   }
 }
 
-export function Chat() {
+export function Chat({ walletAddress }: { walletAddress: string | null }) {
   const [input, setInput] = useState("");
 
-  // Wallet integration is Phase 6c. For now, walletAddress is always null —
-  // the agent will handle it gracefully (asks user to connect, or simply
-  // works with the wallet-less tools: yields, quotes, Marinade APY).
+  // Wallet ref pattern — same as the main web app's chat.tsx. The transport
+  // is built once; its body function reads from this ref every request,
+  // so wallet (re)connection mid-conversation is reflected immediately.
+  const walletAddressRef = useRef<string | null>(walletAddress);
+  useEffect(() => {
+    walletAddressRef.current = walletAddress;
+  }, [walletAddress]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: BACKEND_URL,
-        body: () => ({ walletAddress: null }),
+        body: () => ({ walletAddress: walletAddressRef.current }),
       }),
     []
   );
@@ -57,7 +69,7 @@ export function Chat() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     } catch {
-      // ignore quota errors
+      // ignore
     }
   }, [messages]);
 
@@ -91,7 +103,9 @@ export function Chat() {
                 How can I help with your Solana yield?
               </p>
               <p className="text-xs text-gray-500">
-                Try one of these to start
+                {walletAddress
+                  ? "Wallet connected — try anything."
+                  : "Connect Phantom for balance & signing, or ask read-only questions."}
               </p>
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -142,20 +156,39 @@ export function Chat() {
                     );
                   }
 
-                  // Prepare-* tools need wallet signing — flag them as
-                  // pending-wallet until Phase 6c lands.
                   if (
-                    (name === "prepareJupiterSwap" ||
-                      name === "prepareSolTransfer") &&
+                    name === "prepareJupiterSwap" &&
                     part.state === "output-available"
                   ) {
+                    const out = part.output as SwapToolOutput;
                     return (
-                      <div
+                      <SwapApprovalCard
                         key={i}
-                        className="my-1 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-2 py-1 font-mono text-[10px] text-yellow-200"
-                      >
-                        ⏸ {name} prepared — signing UI lands in 6c
-                      </div>
+                        preview={out.preview}
+                        txBase64={out.txBase64}
+                        onConfirmed={(sig) =>
+                          sendMessage({ text: `Tx confirmed: ${sig}` })
+                        }
+                        onRejected={(reason) => sendMessage({ text: reason })}
+                      />
+                    );
+                  }
+
+                  if (
+                    name === "prepareSolTransfer" &&
+                    part.state === "output-available"
+                  ) {
+                    const out = part.output as TransferToolOutput;
+                    return (
+                      <TransferApprovalCard
+                        key={i}
+                        preview={out.preview}
+                        txBase64={out.txBase64}
+                        onConfirmed={(sig) =>
+                          sendMessage({ text: `Tx confirmed: ${sig}` })
+                        }
+                        onRejected={(reason) => sendMessage({ text: reason })}
+                      />
                     );
                   }
 

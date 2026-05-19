@@ -21,12 +21,27 @@ export default defineManifest({
     "sidePanel",
     "storage",
     "activeTab",
+    "scripting",
   ],
-  // host_permissions kept narrow for V0 — extended later when the content
-  // script needs to read protocol pages (Phase 6d).
-  host_permissions: [
-    "http://localhost:3000/*",
-    "https://*.vercel.app/*",
+  // host_permissions: <all_urls> is required for chrome.scripting.executeScript
+  // to inject the Phantom bridge into the active tab from the side panel
+  // context. activeTab alone is insufficient — it's granted per-invocation,
+  // doesn't survive tab switches inside the side panel, and the side panel's
+  // initial mount runs before any user gesture. The trade-off is the install
+  // warning ("read and change all your data on all websites"). For a personal
+  // V0 self-installed extension, that's acceptable.
+  host_permissions: ["<all_urls>"],
+  // MAIN-world content script that runs on every web page. It exposes
+  // window.__signalBridge so the side panel can talk to Phantom (which only
+  // injects on real web pages, not chrome-extension:// origins). Side panel
+  // invokes bridge methods via chrome.scripting.executeScript.
+  content_scripts: [
+    {
+      matches: ["<all_urls>"],
+      js: ["src/content/bridge-main.ts"],
+      run_at: "document_idle",
+      world: "MAIN",
+    },
   ],
   background: {
     service_worker: "src/background.ts",
