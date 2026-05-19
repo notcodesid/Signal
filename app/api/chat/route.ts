@@ -57,6 +57,20 @@ Rules:
 - AMOUNT SAFETY (critical): NEVER call prepareJupiterSwap, prepareSolTransfer, or any prepare* tool with the user's full balance unless they have explicitly said an amount equal to or greater than that balance. If the user says "stake my SOL", "swap my SOL", "send some SOL", or any vague amount phrasing, ASK "How much SOL would you like to stake/swap/send?" before calling the tool. Always confirm an explicit numeric amount with the user first.`;
 }
 
+// CORS — required because the Chrome extension runs at chrome-extension://
+// origin and would otherwise be blocked by browser CORS policy. For V0 we
+// allow any origin; tighten this once we know the deployed extension ID.
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { headers: CORS_HEADERS });
+}
+
 export async function POST(req: Request) {
   const {
     messages,
@@ -82,5 +96,11 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toUIMessageStreamResponse();
+  const response = result.toUIMessageStreamResponse();
+  // toUIMessageStreamResponse returns a Response with its own headers;
+  // we merge CORS in without clobbering Content-Type / streaming headers.
+  for (const [k, v] of Object.entries(CORS_HEADERS)) {
+    response.headers.set(k, v);
+  }
+  return response;
 }

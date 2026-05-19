@@ -1,83 +1,18 @@
-import { useEffect, useState } from "react";
+import { Chat } from "./Chat";
 
 export function App() {
-  // Smoke-test value: track the current active tab's URL so we know the
-  // chrome.tabs API is reachable from the side panel. Phase 6d will use
-  // this to give the agent page context.
-  const [tabUrl, setTabUrl] = useState<string>("(no tab)");
-
-  useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-      const url = tabs[0]?.url ?? "(no url)";
-      setTabUrl(url);
-    });
-  }, []);
-
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        padding: "16px",
-        gap: "12px",
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <div
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "8px",
-            background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-          }}
-        />
-        <h1 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>
-          Signal
-        </h1>
+    <div className="flex flex-col h-full p-3 gap-3 bg-black text-gray-100">
+      <header className="flex items-center gap-2 px-1">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500" />
+        <h1 className="text-sm font-semibold tracking-tight">Signal</h1>
+        <span className="ml-auto text-[10px] text-gray-500">
+          Phase 6b · read-only
+        </span>
       </header>
-
-      <main
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          fontSize: "13px",
-          color: "#9ca3af",
-        }}
-      >
-        <p>
-          Phase 6a — extension shell loaded ✅
-        </p>
-        <div
-          style={{
-            border: "1px solid #1f2937",
-            borderRadius: "8px",
-            padding: "10px",
-            fontSize: "11px",
-            fontFamily: "ui-monospace, SFMono-Regular, monospace",
-            wordBreak: "break-all",
-            color: "#d1d5db",
-            background: "#111827",
-          }}
-        >
-          <div style={{ color: "#6b7280", marginBottom: "4px" }}>
-            current tab
-          </div>
-          {tabUrl}
-        </div>
-        <p style={{ fontSize: "12px", color: "#6b7280" }}>
-          Phase 6b will replace this panel with the real chat UI talking to{" "}
-          <code>/api/chat</code>.
-        </p>
-      </main>
+      <div className="flex-1 min-h-0">
+        <Chat />
+      </div>
     </div>
   );
 }
