@@ -7,14 +7,57 @@ import {
 import { groq } from "@ai-sdk/groq";
 import { makeTools } from "@/lib/tools";
 
-function buildSystemPrompt(walletAddress: string | null): string {
+type PageContext = {
+  url: string | null;
+  host: string | null;
+  title: string | null;
+  protocol: string | null;
+};
+
+function buildSystemPrompt(
+  walletAddress: string | null,
+  pageContext: PageContext | null
+): string {
   const walletLine = walletAddress
     ? `The user's connected wallet address is: ${walletAddress}. You may reference it directly without calling a tool.`
     : `The user has NOT connected a wallet yet. If they ask about their wallet, balance, or holdings, tell them to connect their Solana wallet first.`;
 
+  // Page context comes from the Chrome extension when present. It tells us
+  // which DeFi protocol (if any) the user is currently looking at. Use this
+  // to make suggestions feel ambient — but don't force-bring it up. Only
+  // mention the protocol if it's directly relevant to the user's question.
+  // Per-protocol intent hints. When the user is on one of these protocols
+  // and asks something ambiguous, the agent should jump straight to that
+  // protocol's primary action instead of generic clarifying questions.
+  const INTENT_HINTS: Record<string, string> = {
+    Jupiter: "Default intent: swap. If user says 'can I do this' or 'help me with X SOL', interpret as a swap and ask which output token.",
+    Marinade: "Default intent: liquid stake SOL → mSOL. Don't ask 'do you want to swap or stake' — assume stake and confirm the amount.",
+    Jito: "Default intent: liquid stake SOL → jitoSOL.",
+    Sanctum: "Default intent: liquid staking through an LST.",
+    Kamino: "Default intent: lend (supply) or borrow on Kamino. Don't suggest swapping unless explicitly asked.",
+    MarginFi: "Default intent: lend or borrow.",
+    Save: "Default intent: lend or borrow (Save is the rebranded Solend).",
+    Drift: "Default intent: perp trading or spot lending.",
+    Raydium: "Default intent: swap or LP.",
+    Orca: "Default intent: swap or LP.",
+    Meteora: "Default intent: LP / dynamic vault deposits.",
+    Phoenix: "Default intent: limit-order book trading.",
+    "Magic Eden": "Default intent: NFT browse / list / buy.",
+    Tensor: "Default intent: NFT browse / list / buy.",
+    "Pump.fun": "Default intent: token launch / trade memecoins.",
+  };
+
+  let contextLine = "";
+  if (pageContext?.protocol) {
+    const hint = INTENT_HINTS[pageContext.protocol];
+    contextLine = `\n\nThe user is currently viewing **${pageContext.protocol}** (${pageContext.host}).${hint ? " " + hint : ""} Only mention this awareness when it actually helps — don't lead every reply with "I see you're on...".`;
+  } else if (pageContext?.host) {
+    contextLine = `\n\nThe user is on ${pageContext.host} (not a recognized DeFi protocol).`;
+  }
+
   return `You are Signal, an AI co-pilot for Solana DeFi.
 
-${walletLine}
+${walletLine}${contextLine}
 
 You can:
 - getWalletBalance — fetch the current SOL balance of the connected wallet. Use for any "balance", "holdings", "how much SOL", "what's in my wallet" question.
@@ -75,9 +118,19 @@ export async function POST(req: Request) {
   const {
     messages,
     walletAddress,
-  }: { messages: UIMessage[]; walletAddress: string | null } = await req.json();
+    pageContext,
+  }: {
+    messages: UIMessage[];
+    walletAddress: string | null;
+    pageContext?: PageContext | null;
+  } = await req.json();
 
-  console.log("[chat] walletAddress:", walletAddress);
+  console.log(
+    "[chat] walletAddress:",
+    walletAddress,
+    "page:",
+    pageContext?.protocol ?? pageContext?.host ?? "(none)"
+  );
 
   const tools = makeTools({ walletAddress });
 
@@ -87,7 +140,7 @@ export async function POST(req: Request) {
     // hallucinating successful txs without calling the tool; this should
     // behave correctly.
     model: groq("openai/gpt-oss-120b"),
-    system: buildSystemPrompt(walletAddress),
+    system: buildSystemPrompt(walletAddress, pageContext ?? null),
     messages: await convertToModelMessages(messages),
     tools,
     stopWhen: stepCountIs(5),

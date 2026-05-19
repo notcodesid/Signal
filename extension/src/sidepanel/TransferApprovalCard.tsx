@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { bridgeSignTransaction } from "@/lib/phantom";
 
-// Devnet for V0 testing. When the user funds a mainnet wallet, swap this
-// for the Helius mainnet URL via a settings UI in 6f.
-const RPC_URL = "https://api.devnet.solana.com";
+const RPC_BY_CLUSTER = {
+  mainnet: "https://api.mainnet-beta.solana.com",
+  devnet: "https://api.devnet.solana.com",
+} as const;
 
 export type TransferPreview = {
   from: string;
@@ -69,7 +70,10 @@ export function TransferApprovalCard({
       );
 
       setState("submitting");
-      const connection = new Connection(RPC_URL, "confirmed");
+      const connection = new Connection(
+        RPC_BY_CLUSTER[preview.cluster],
+        "confirmed"
+      );
       const sig = await connection.sendRawTransaction(signedTx.serialize(), {
         skipPreflight: false,
         maxRetries: 3,

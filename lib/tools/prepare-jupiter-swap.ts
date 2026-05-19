@@ -114,6 +114,9 @@ export function makeSwapTools({
 
         // Return a small preview + the unsigned tx bytes. The UI will render
         // an approval card; the user must click Approve to actually sign.
+        // `cluster` tells the client which RPC to submit to — Jupiter only
+        // has liquidity on mainnet, so this is always "mainnet" regardless
+        // of what RPC the rest of the app is configured for.
         return {
           preview: {
             inputMint: quote.inputMint,
@@ -124,6 +127,7 @@ export function makeSwapTools({
             priceImpactPct: quote.priceImpactPct,
             slippageBps: quote.slippageBps,
             routeHops: quote.routePlan?.length ?? 0,
+            cluster: "mainnet" as const,
           },
           txBase64,
         };

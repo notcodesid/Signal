@@ -14,6 +14,7 @@ import {
   TransferApprovalCard,
   type TransferPreview,
 } from "./TransferApprovalCard";
+import type { PageContext } from "@/lib/usePageContext";
 
 const BACKEND_URL = "http://localhost:3000/api/chat";
 const STORAGE_KEY = "signal-ext:chat:v1";
@@ -39,7 +40,13 @@ function loadStored(): UIMessage[] {
   }
 }
 
-export function Chat({ walletAddress }: { walletAddress: string | null }) {
+export function Chat({
+  walletAddress,
+  pageContext,
+}: {
+  walletAddress: string | null;
+  pageContext: PageContext;
+}) {
   const [input, setInput] = useState("");
 
   // Wallet ref pattern — same as the main web app's chat.tsx. The transport
@@ -50,11 +57,21 @@ export function Chat({ walletAddress }: { walletAddress: string | null }) {
     walletAddressRef.current = walletAddress;
   }, [walletAddress]);
 
+  // Same ref pattern for page context — updates every time the user
+  // switches tabs or navigates within a tab.
+  const pageContextRef = useRef<PageContext>(pageContext);
+  useEffect(() => {
+    pageContextRef.current = pageContext;
+  }, [pageContext]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: BACKEND_URL,
-        body: () => ({ walletAddress: walletAddressRef.current }),
+        body: () => ({
+          walletAddress: walletAddressRef.current,
+          pageContext: pageContextRef.current,
+        }),
       }),
     []
   );

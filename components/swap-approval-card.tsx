@@ -13,6 +13,7 @@ export type SwapPreview = {
   priceImpactPct: string;
   slippageBps: number;
   routeHops: number;
+  cluster: "mainnet" | "devnet";
 };
 
 // A small registry so we can show "0.1 SOL" instead of "100000000 So111...".

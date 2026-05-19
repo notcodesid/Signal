@@ -1,5 +1,6 @@
 import { Chat } from "./Chat";
 import { usePhantom } from "@/lib/usePhantom";
+import { usePageContext } from "@/lib/usePageContext";
 
 function truncate(addr: string): string {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
@@ -8,6 +9,7 @@ function truncate(addr: string): string {
 export function App() {
   const { publicKey, connecting, error, hasPhantom, connect, disconnect } =
     usePhantom();
+  const pageContext = usePageContext();
 
   return (
     <div className="flex flex-col h-full p-3 gap-3 bg-black text-gray-100">
@@ -43,10 +45,27 @@ export function App() {
         </div>
       </header>
 
+      {/* Page-context badge: only show when we're on a known DeFi site, to
+          avoid clutter on every random tab. */}
+      {pageContext.protocol && (
+        <div
+          className="mx-1 flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200"
+          title={pageContext.url ?? undefined}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+          <span>
+            Viewing <strong>{pageContext.protocol}</strong>
+          </span>
+          <span className="ml-auto font-mono text-blue-300/60 truncate max-w-[140px]">
+            {pageContext.host}
+          </span>
+        </div>
+      )}
+
       {!hasPhantom && (
         <div className="mx-1 rounded-md border border-yellow-500/30 bg-yellow-500/5 px-2 py-1.5 text-[10px] text-yellow-200">
-          Phantom not detected in this side panel. Install Phantom, or open the
-          panel on a regular web page (some Phantom builds only inject there).
+          Phantom not detected on this page. Open a regular https:// site
+          and reload it, then try Connect again.
         </div>
       )}
       {error && (
@@ -56,7 +75,7 @@ export function App() {
       )}
 
       <div className="flex-1 min-h-0">
-        <Chat walletAddress={publicKey} />
+        <Chat walletAddress={publicKey} pageContext={pageContext} />
       </div>
     </div>
   );

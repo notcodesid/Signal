@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { bridgeSignTransaction } from "@/lib/phantom";
 
-const RPC_URL = "https://api.devnet.solana.com";
+// Per-cluster RPCs. Jupiter swaps are always mainnet (that's where the
+// liquidity is). SOL transfers may be either, controlled by their preview.
+const RPC_BY_CLUSTER = {
+  mainnet: "https://api.mainnet-beta.solana.com",
+  devnet: "https://api.devnet.solana.com",
+} as const;
 
 export type SwapPreview = {
   inputMint: string;
@@ -13,6 +18,7 @@ export type SwapPreview = {
   priceImpactPct: string;
   slippageBps: number;
   routeHops: number;
+  cluster: "mainnet" | "devnet";
 };
 
 const KNOWN_TOKENS = new Map<string, { symbol: string; decimals: number }>([
@@ -83,7 +89,10 @@ export function SwapApprovalCard({
       );
 
       setState("submitting");
-      const connection = new Connection(RPC_URL, "confirmed");
+      const connection = new Connection(
+        RPC_BY_CLUSTER[preview.cluster],
+        "confirmed"
+      );
       const sig = await connection.sendRawTransaction(signedTx.serialize(), {
         skipPreflight: false,
         maxRetries: 3,
@@ -131,7 +140,12 @@ export function SwapApprovalCard({
 
   return (
     <div className="my-2 rounded-lg border border-blue-500/40 bg-blue-500/5 p-2.5 text-xs">
-      <div className="mb-2 font-medium text-blue-200">Swap proposal</div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-medium text-blue-200">Swap proposal</span>
+        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[9px] uppercase tracking-wider text-blue-200">
+          {preview.cluster}
+        </span>
+      </div>
       <div className="grid grid-cols-2 gap-y-1 text-[11px]">
         <div className="text-gray-400">You pay</div>
         <div className="text-right font-mono">{inLabel}</div>
@@ -179,7 +193,7 @@ export function SwapApprovalCard({
         <div className="mt-3 text-[11px] text-green-400 break-all">
           ✅ Confirmed.{" "}
           <a
-            href={`https://solscan.io/tx/${signature}`}
+            href={`https://solscan.io/tx/${signature}${preview.cluster === "devnet" ? "?cluster=devnet" : ""}`}
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
