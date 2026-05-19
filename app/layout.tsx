@@ -1,0 +1,36 @@
+import type { Metadata } from "next";
+import { Inter, Inter_Tight } from "next/font/google";
+import "./globals.css";
+import { Providers } from "./providers";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const interDisplay = Inter_Tight({
+  variable: "--font-inter-display",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Loop",
+  description: "An AI-native yield strategy agent for Solana.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${inter.variable} ${interDisplay.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col font-sans">
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
