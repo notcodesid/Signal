@@ -14,6 +14,11 @@ import {
   TransferApprovalCard,
   type TransferPreview,
 } from "./TransferApprovalCard";
+import { YieldLoopCard, type YieldLoopLink } from "./YieldLoopCard";
+import {
+  TokenLaunchApprovalCard,
+  type TokenLaunchPreview,
+} from "./TokenLaunchApprovalCard";
 import type { PageContext } from "@/lib/usePageContext";
 
 const BACKEND_URL = "http://localhost:3000/api/chat";
@@ -28,6 +33,11 @@ const SUGGESTED_PROMPTS = [
 
 type SwapToolOutput = { preview: SwapPreview; txBase64: string };
 type TransferToolOutput = { preview: TransferPreview; txBase64: string };
+type TokenLaunchToolOutput = {
+  preview: TokenLaunchPreview;
+  txBase64: string;
+  mintSecret: number[];
+};
 
 function loadStored(): UIMessage[] {
   try {
@@ -203,6 +213,39 @@ export function Chat({
                         txBase64={out.txBase64}
                         onConfirmed={(sig) =>
                           sendMessage({ text: `Tx confirmed: ${sig}` })
+                        }
+                        onRejected={(reason) => sendMessage({ text: reason })}
+                      />
+                    );
+                  }
+
+                  // Phase 10a — deep-link card for leveraged yield loops.
+                  if (
+                    name === "prepareYieldLoopLink" &&
+                    part.state === "output-available"
+                  ) {
+                    return (
+                      <YieldLoopCard
+                        key={i}
+                        link={part.output as YieldLoopLink}
+                      />
+                    );
+                  }
+
+                  // Phase 10b — SPL token launch (dual-sign: wallet + mint kp).
+                  if (
+                    name === "prepareTokenLaunch" &&
+                    part.state === "output-available"
+                  ) {
+                    const out = part.output as TokenLaunchToolOutput;
+                    return (
+                      <TokenLaunchApprovalCard
+                        key={i}
+                        preview={out.preview}
+                        txBase64={out.txBase64}
+                        mintSecret={out.mintSecret}
+                        onConfirmed={(sig) =>
+                          sendMessage({ text: `Token launched: ${sig}` })
                         }
                         onRejected={(reason) => sendMessage({ text: reason })}
                       />

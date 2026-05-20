@@ -5,6 +5,9 @@ import { makeTransferTools } from "./prepare-sol-transfer";
 import { makeYieldTools } from "./get-top-yields";
 import { makeMarinadeTools } from "./get-marinade-apy";
 import { makeTokenAccountTools } from "./get-token-accounts";
+import { makeYieldLoopTools } from "./get-yield-loops";
+import { makeYieldLoopLinkTools } from "./prepare-yield-loop-link";
+import { makeTokenLaunchTools } from "./prepare-token-launch";
 
 /**
  * Build the agent's full toolset for a given request.
@@ -24,5 +27,8 @@ export function makeTools({
     ...makeTransferTools({ walletAddress }),
     ...makeYieldTools(),
     ...makeMarinadeTools(),
+    ...makeYieldLoopTools(),
+    ...makeYieldLoopLinkTools(),
+    ...makeTokenLaunchTools({ walletAddress }),
   };
 }

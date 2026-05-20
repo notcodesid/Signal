@@ -14,6 +14,11 @@ import {
   TransferApprovalCard,
   type TransferPreview,
 } from "@/components/transfer-approval-card";
+import { YieldLoopCard, type YieldLoopLink } from "@/components/yield-loop-card";
+import {
+  TokenLaunchApprovalCard,
+  type TokenLaunchPreview,
+} from "@/components/token-launch-approval-card";
 
 // Output shape returned by lib/tools/prepare-jupiter-swap.ts.
 type SwapToolOutput = {
@@ -25,6 +30,13 @@ type SwapToolOutput = {
 type TransferToolOutput = {
   preview: TransferPreview;
   txBase64: string;
+};
+
+// Output shape returned by lib/tools/prepare-token-launch.ts.
+type TokenLaunchToolOutput = {
+  preview: TokenLaunchPreview;
+  txBase64: string;
+  mintSecret: number[];
 };
 
 // localStorage key for chat persistence. Bumping this number invalidates old
@@ -210,6 +222,32 @@ export function Chat() {
                             preview={out.preview}
                             txBase64={out.txBase64}
                             onConfirmed={(sig) => sendMessage({ text: `Tx confirmed: ${sig}` })}
+                            onRejected={(reason) => sendMessage({ text: reason })}
+                          />
+                        </div>
+                      );
+                    }
+
+                    // Phase 10a — deep-link card for leveraged yield loops.
+                    if (name === "prepareYieldLoopLink" && part.state === "output-available") {
+                      const link = part.output as YieldLoopLink;
+                      return (
+                        <div key={i} className="mt-4">
+                          <YieldLoopCard link={link} />
+                        </div>
+                      );
+                    }
+
+                    // Phase 10b — SPL token launch approval card.
+                    if (name === "prepareTokenLaunch" && part.state === "output-available") {
+                      const out = part.output as TokenLaunchToolOutput;
+                      return (
+                        <div key={i} className="mt-4">
+                          <TokenLaunchApprovalCard
+                            preview={out.preview}
+                            txBase64={out.txBase64}
+                            mintSecret={out.mintSecret}
+                            onConfirmed={(sig) => sendMessage({ text: `Token launched: ${sig}` })}
                             onRejected={(reason) => sendMessage({ text: reason })}
                           />
                         </div>
