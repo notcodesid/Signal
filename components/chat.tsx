@@ -524,17 +524,20 @@ export function Chat() {
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
+                  className="group relative inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-[12px] font-medium text-gray-700 hover:bg-gray-50 cursor-not-allowed opacity-70"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
                   DeepSearch
+                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 z-50">
+                    Coming soon
+                  </span>
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
+                  className="group relative inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-[12px] font-medium text-gray-700 hover:bg-gray-50 cursor-not-allowed opacity-70"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                     <path d="M9 18h6" />
@@ -542,19 +545,25 @@ export function Chat() {
                     <path d="M2 9a10 10 0 1 1 20 0c0 5-3 6.5-3 9H5c0-2.5-3-4-3-9z" />
                   </svg>
                   Think
+                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 z-50">
+                    Coming soon
+                  </span>
                 </button>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   aria-label="Voice input"
-                  className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
+                  className="group relative rounded-full p-2 text-gray-500 hover:bg-gray-100 cursor-not-allowed opacity-70"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                     <rect x="9" y="2" width="6" height="12" rx="3" />
                     <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
                     <line x1="12" y1="19" x2="12" y2="23" />
                   </svg>
+                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 z-50">
+                    Coming soon
+                  </span>
                 </button>
                 <button
                   type="submit"
