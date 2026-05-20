@@ -139,10 +139,23 @@ function truncateAddr(s: string): string {
 }
 
 export function Chat() {
-  const { publicKey } = useWallet();
+  const { publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
   const [input, setInput] = useState("");
   const [activeMode, setActiveMode] = useState<ModeId>("trade");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleCopyAddress = () => {
+    if (publicKey) {
+      navigator.clipboard.writeText(publicKey.toBase58());
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleDisconnect = () => {
+    disconnect();
+    setIsDropdownOpen(false);
+  };
 
   const walletAddressRef = useRef<string | null>(publicKey?.toBase58() ?? null);
   useEffect(() => {
@@ -210,55 +223,78 @@ export function Chat() {
     <div className="flex h-full w-full flex-col bg-white text-gray-900">
       {/* ─── Slim header ──────────────────────────────────────────────────── */}
       <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-100 px-4">
-        <button
-          aria-label="Menu"
-          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-5 w-5">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            aria-label="Menu"
+            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-5 w-5">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
 
-        <button
-          onClick={() => {
-            if (!publicKey) setVisible(true);
-          }}
-          className="group flex items-center gap-2 rounded-full px-3 py-1.5 hover:bg-gray-100"
-        >
-          <span
-            className={
-              "h-1.5 w-1.5 rounded-full " +
-              (publicKey ? "bg-emerald-500" : "bg-gray-300")
-            }
-            aria-hidden
-          />
-          <span className="font-display text-[15px] font-semibold tracking-tight text-gray-900">
+          <button
+            aria-label="New chat"
+            onClick={newChat}
+            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+
+          <span className="font-display text-[15px] font-semibold tracking-tight text-gray-900 ml-1">
             Signal
           </span>
-          {publicKey ? (
-            <span className="font-mono text-[11px] text-gray-500">
-              {truncateAddr(publicKey.toBase58())}
-            </span>
-          ) : (
-            <span className="text-[12px] text-gray-400">connect</span>
-          )}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3 text-gray-300 group-hover:text-gray-500">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
+        </div>
 
-        <button
-          aria-label="New chat"
-          onClick={newChat}
-          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => {
+              if (!publicKey) setVisible(true);
+              else setIsDropdownOpen(!isDropdownOpen);
+            }}
+            className="group flex items-center gap-2 rounded-full px-3 py-1.5 hover:bg-gray-100"
+          >
+            <span
+              className={
+                "h-1.5 w-1.5 rounded-full " +
+                (publicKey ? "bg-emerald-500" : "bg-gray-300")
+              }
+              aria-hidden
+            />
+            {publicKey ? (
+              <span className="font-mono text-[11px] text-gray-500">
+                {truncateAddr(publicKey.toBase58())}
+              </span>
+            ) : (
+              <span className="text-[12px] text-gray-400">connect</span>
+            )}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3 text-gray-300 group-hover:text-gray-500">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          {isDropdownOpen && publicKey && (
+            <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-100 bg-white p-1 shadow-lg z-50">
+              <button
+                onClick={handleCopyAddress}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+              >
+                Copy Address
+              </button>
+              <button
+                onClick={handleDisconnect}
+                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+              >
+                Disconnect
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* ─── Mode picker (only when no messages yet) ─────────────────────── */}
@@ -462,7 +498,7 @@ export function Chat() {
       </div>
 
       {/* ─── Bottom input bar (fixed as flex child, not absolute) ────────── */}
-      <div className="flex-shrink-0 border-t border-gray-100 bg-white px-4 pb-5 pt-3">
+      <div className="flex-shrink-0 bg-white px-4 pb-5 pt-3">
         <form
           onSubmit={onSubmit}
           className="mx-auto flex w-full max-w-3xl items-center gap-2"
