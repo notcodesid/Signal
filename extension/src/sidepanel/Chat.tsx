@@ -19,6 +19,7 @@ import {
   TokenLaunchApprovalCard,
   type TokenLaunchPreview,
 } from "./TokenLaunchApprovalCard";
+import { Markdown } from "./Markdown";
 import type { PageContext } from "@/lib/usePageContext";
 
 const BACKEND_URL = "http://localhost:3000/api/chat";
@@ -102,6 +103,12 @@ export function Chat({
 
   const isStreaming = status === "submitted" || status === "streaming";
 
+  // Auto-scroll to the bottom when messages change or streaming starts.
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, isStreaming]);
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
@@ -122,25 +129,30 @@ export function Chat({
 
   return (
     <div className="flex flex-col h-full bg-black/40 rounded-2xl border border-white/10 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-5 text-center animate-in fade-in zoom-in duration-500">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-200">
-                How can I help with your Solana yield?
+              <p className="text-[13px] font-semibold text-gray-100">
+                Welcome to Signal
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-[11px] text-gray-500">
                 {walletAddress
-                  ? "Wallet connected — try anything."
-                  : "Connect Phantom for balance & signing, or ask read-only questions."}
+                  ? "Wallet connected. Try anything below."
+                  : "Connect Phantom for balance & signing — or ask anything."}
               </p>
             </div>
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-1.5 w-full">
               {SUGGESTED_PROMPTS.map((p) => (
                 <button
                   key={p}
                   onClick={() => onSuggestion(p)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-white transition text-left"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-gray-300 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-white transition text-left"
                 >
                   {p}
                 </button>
@@ -152,20 +164,25 @@ export function Chat({
           <div
             key={m.id}
             className={
-              m.role === "user" ? "flex justify-end" : "flex justify-start"
+              "flex animate-in fade-in slide-in-from-bottom-1 duration-300 " +
+              (m.role === "user" ? "justify-end" : "justify-start")
             }
           >
             <div
               className={
-                "min-w-0 max-w-[90%] space-y-2 rounded-xl px-3 py-2 text-[13px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden " +
+                "min-w-0 max-w-[92%] space-y-2 rounded-xl px-3 py-2 text-[13px] leading-relaxed break-words overflow-hidden " +
                 (m.role === "user"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-blue-600 text-white whitespace-pre-wrap"
                   : "bg-white/5 border border-white/10 text-gray-100")
               }
             >
               {m.parts.map((part, i) => {
                 if (part.type === "text") {
-                  return <span key={i}>{part.text}</span>;
+                  return (
+                    <div key={i} className="block">
+                      <Markdown>{part.text}</Markdown>
+                    </div>
+                  );
                 }
 
                 if (isToolUIPart(part)) {
@@ -258,10 +275,27 @@ export function Chat({
                   return (
                     <div
                       key={i}
-                      className="my-1 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-[10px] text-gray-300"
+                      className="my-1 inline-flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 font-mono text-[10px] text-gray-300"
                     >
-                      <span>{running ? "⚙️" : "✅"}</span>
-                      <span>{name}</span>
+                      {running ? (
+                        <div className="w-3 h-3 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
+                      ) : (
+                        <svg
+                          className="w-3 h-3 text-emerald-400"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                      <span>
+                        {running ? "Running" : "Done"} ·{" "}
+                        <span className="text-white">{name}</span>
+                      </span>
                     </div>
                   );
                 }
@@ -276,6 +310,8 @@ export function Chat({
             Error: {error.message}
           </p>
         )}
+        {/* Scroll anchor — keeps new content in view as messages stream. */}
+        <div ref={bottomRef} aria-hidden />
       </div>
       <form
         onSubmit={onSubmit}

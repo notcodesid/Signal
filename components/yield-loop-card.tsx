@@ -12,25 +12,25 @@ export type YieldLoopLink = {
 
 export function YieldLoopCard({ link }: { link: YieldLoopLink }) {
   return (
-    <div className="my-2 w-full rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="font-medium text-amber-200">Leverage loop</span>
-        <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-amber-200">
+    <div className="my-2 w-full rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="font-semibold text-amber-900">Leverage loop</span>
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] uppercase tracking-wider text-amber-700">
           deep link
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-y-1 text-xs">
-        <div className="text-gray-400">Protocol</div>
-        <div className="text-right font-mono">{link.projectName}</div>
-        <div className="text-gray-400">Market</div>
-        <div className="text-right font-mono">{link.symbol}</div>
-        <div className="text-gray-400">Net APY</div>
-        <div className="text-right font-mono">{link.apy.toFixed(2)}%</div>
+      <div className="grid grid-cols-2 gap-y-1.5 text-xs">
+        <div className="text-gray-500">Protocol</div>
+        <div className="text-right font-mono text-gray-900">{link.projectName}</div>
+        <div className="text-gray-500">Market</div>
+        <div className="text-right font-mono text-gray-900">{link.symbol}</div>
+        <div className="text-gray-500">Net APY</div>
+        <div className="text-right font-mono text-gray-900">{link.apy.toFixed(2)}%</div>
       </div>
       {link.notes && (
-        <p className="mt-2 text-[11px] text-amber-100/70">{link.notes}</p>
+        <p className="mt-2 text-[11px] text-amber-800/80">{link.notes}</p>
       )}
-      <p className="mt-2 text-[11px] text-gray-400">
+      <p className="mt-2 text-[11px] text-gray-500">
         Native loop execution is coming. For now, open the protocol&apos;s UI
         to complete the loop.
       </p>
@@ -38,7 +38,7 @@ export function YieldLoopCard({ link }: { link: YieldLoopLink }) {
         href={link.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700"
       >
         Open in {link.projectName} ↗
       </a>

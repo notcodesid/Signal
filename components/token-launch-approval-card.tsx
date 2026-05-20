@@ -117,44 +117,41 @@ export function TokenLaunchApprovalCard({
   const explorerSuffix = preview.cluster === "devnet" ? "?cluster=devnet" : "";
 
   return (
-    <div className="my-2 w-full rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 text-sm">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="font-medium text-emerald-200">Token launch</span>
-        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-200">
+    <div className="my-2 w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="font-semibold text-emerald-900">Token launch</span>
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-700">
           {preview.cluster}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-y-1 text-xs">
-        <div className="text-gray-400">Name</div>
-        <div className="text-right font-mono">{preview.name}</div>
-        <div className="text-gray-400">Symbol</div>
-        <div className="text-right font-mono">{preview.symbol}</div>
-        <div className="text-gray-400">Decimals</div>
-        <div className="text-right font-mono">{preview.decimals}</div>
-        <div className="text-gray-400">Initial supply</div>
-        <div className="text-right font-mono">
+      <div className="grid grid-cols-2 gap-y-1.5 text-xs">
+        <div className="text-gray-500">Name</div>
+        <div className="text-right font-mono text-gray-900">{preview.name}</div>
+        <div className="text-gray-500">Symbol</div>
+        <div className="text-right font-mono text-gray-900">{preview.symbol}</div>
+        <div className="text-gray-500">Decimals</div>
+        <div className="text-right font-mono text-gray-900">{preview.decimals}</div>
+        <div className="text-gray-500">Initial supply</div>
+        <div className="text-right font-mono text-gray-900">
           {preview.initialSupply.toLocaleString()}
         </div>
-        <div className="text-gray-400">Mint address</div>
-        <div
-          className="text-right font-mono"
-          title={preview.mintAddress}
-        >
+        <div className="text-gray-500">Mint address</div>
+        <div className="text-right font-mono text-gray-900" title={preview.mintAddress}>
           {truncate(preview.mintAddress)}
         </div>
       </div>
 
-      <p className="mt-2 text-[11px] text-emerald-100/60">
+      <p className="mt-2 text-[11px] text-emerald-800/70">
         Wallets will show this token by its mint address until Metaplex
         metadata is added (separate step).
       </p>
 
       {!finished && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-4 flex gap-2">
           <button
             onClick={onApprove}
             disabled={busy}
-            className="flex-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="flex-1 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {state === "signing" && "Awaiting wallet…"}
             {state === "submitting" && "Submitting…"}
@@ -164,7 +161,7 @@ export function TokenLaunchApprovalCard({
           <button
             onClick={onReject}
             disabled={busy}
-            className="rounded-md border border-gray-600 px-3 py-1.5 text-xs text-gray-200 disabled:opacity-50"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Reject
           </button>
@@ -172,7 +169,7 @@ export function TokenLaunchApprovalCard({
       )}
 
       {state === "confirmed" && signature && (
-        <div className="mt-3 text-xs text-green-400 break-all">
+        <div className="mt-3 text-xs text-green-700 break-all">
           ✅ Token launched.{" "}
           <a
             href={`https://solscan.io/tx/${signature}${explorerSuffix}`}
@@ -194,10 +191,10 @@ export function TokenLaunchApprovalCard({
         </div>
       )}
       {state === "rejected" && (
-        <div className="mt-3 text-xs text-gray-400">Launch rejected.</div>
+        <div className="mt-3 text-xs text-gray-500">Launch rejected.</div>
       )}
       {state === "error" && error && (
-        <div className="mt-3 text-xs text-red-400 break-words">{error}</div>
+        <div className="mt-3 text-xs text-red-600 break-words">{error}</div>
       )}
     </div>
   );
