@@ -14,8 +14,8 @@ const interDisplay = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: "Loop",
-  description: "An AI-native yield strategy agent for Solana.",
+  title: "signal",
+  description: "embedded ai in all crypto protocols.",
 };
 
 export default function RootLayout({
