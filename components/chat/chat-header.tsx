@@ -43,7 +43,7 @@ export function ChatHeader() {
 
   return (
     <header className="flex h-14 flex-shrink-0 items-center justify-between px-6">
-      <span className="ml-2 text-[15px] font-medium tracking-wide text-gray-900">Signal</span>
+      <span className="ml-2 text-[15px] font-medium tracking-wide text-gray-900">signal</span>
 
       <div className="relative">
         <button

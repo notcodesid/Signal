@@ -31,6 +31,9 @@ export function useSignalChat() {
   // the current wallet.
   const transport = useMemo(
     () =>
+      // body() is a callback invoked per-request, not during render, so reading
+      // the ref here is safe — the lint rule can't see through the closure.
+      // eslint-disable-next-line react-hooks/refs
       new DefaultChatTransport({
         api: "/api/chat",
         body: () => ({ walletAddress: walletAddressRef.current }),
