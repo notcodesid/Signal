@@ -14,7 +14,6 @@ export function AlertsBell() {
   const { alerts, unreadCount, markAllRead, clearAll } = useWatchAlerts();
   const ref = useRef<HTMLDivElement | null>(null);
 
-  // Click-outside to close the drawer.
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -29,21 +28,22 @@ export function AlertsBell() {
   return (
     <div className="relative" ref={ref}>
       <button
+        type="button"
         onClick={() => {
           const wasOpen = open;
           setOpen(!wasOpen);
-          // Opening the drawer counts as "seeing" the alerts.
           if (!wasOpen && unreadCount > 0) void markAllRead();
         }}
-        className="relative rounded-md border border-white/10 px-1.5 py-1 text-gray-300 hover:text-white hover:bg-white/5"
+        className="relative rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
         title="Alerts"
       >
         <svg
-          className="w-3.5 h-3.5"
+          className="h-4 w-4"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           strokeWidth="2"
+          aria-hidden
         >
           <path
             strokeLinecap="round"
@@ -52,20 +52,21 @@ export function AlertsBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 rounded-full bg-blue-500 px-1 py-px text-[9px] font-bold leading-none text-white min-w-[14px] text-center">
+          <span className="absolute -right-0.5 -top-0.5 min-w-[14px] rounded-full bg-gray-900 px-1 py-px text-center text-[9px] font-bold leading-none text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-9 z-20 w-72 overflow-hidden rounded-lg border border-white/10 bg-gray-950 shadow-2xl">
-          <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-            <span className="text-xs font-medium text-gray-200">Alerts</span>
+        <div className="absolute right-0 top-10 z-20 w-72 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg">
+          <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+            <span className="text-[12px] font-medium text-gray-900">Alerts</span>
             {alerts.length > 0 && (
               <button
+                type="button"
                 onClick={() => void clearAll()}
-                className="text-[10px] text-gray-500 hover:text-gray-300"
+                className="text-[10px] text-gray-400 hover:text-gray-700"
               >
                 Clear all
               </button>
@@ -74,22 +75,22 @@ export function AlertsBell() {
           <div className="max-h-72 overflow-y-auto">
             {alerts.length === 0 ? (
               <p className="p-4 text-center text-[11px] text-gray-500">
-                No alerts yet. Signal will ping you when your SOL balance
+                No alerts yet. Signal will notify you when your SOL balance
                 changes.
               </p>
             ) : (
               alerts.map((a) => (
                 <div
                   key={a.id}
-                  className="border-b border-white/5 px-3 py-2 last:border-b-0"
+                  className="border-b border-gray-50 px-3 py-2 last:border-b-0"
                 >
-                  <div className="text-[11px] font-medium text-gray-200">
+                  <div className="text-[11px] font-medium text-gray-900">
                     {a.title}
                   </div>
-                  <div className="font-mono text-[10px] text-gray-400 break-all">
+                  <div className="break-all font-mono text-[10px] text-gray-500">
                     {a.body}
                   </div>
-                  <div className="mt-0.5 text-[9px] text-gray-600">
+                  <div className="mt-0.5 text-[9px] text-gray-400">
                     {formatRelative(a.createdAt)}
                   </div>
                 </div>

@@ -20,17 +20,46 @@ import {
   type TokenLaunchPreview,
 } from "./TokenLaunchApprovalCard";
 import { Markdown } from "./Markdown";
+import {
+  ArrowUpIcon,
+  CheckIcon,
+  ErrorIcon,
+  SparkleIcon,
+  Spinner,
+  TypingDots,
+} from "./icons";
 import type { PageContext } from "@/lib/usePageContext";
 
 const BACKEND_URL = "http://localhost:3000/api/chat";
 const STORAGE_KEY = "signal-ext:chat:v1";
 
-const SUGGESTED_PROMPTS = [
-  "What's my SOL balance?",
-  "Show me top stablecoin yields above $10M TVL",
-  "What's the current Marinade staking APY?",
-  "Send 0.001 SOL to 1nc1nerator11111111111111111111111111111111",
+const DEFAULT_PROMPTS = [
+  "what's my sol balance?",
+  "highest stablecoin yields above $10m tvl",
+  "best swap route for sol to usdc",
+  "current marinade staking apy",
 ];
+
+const PROMPTS_BY_PROTOCOL: Record<string, string[]> = {
+  Jupiter: [
+    "best swap route for sol to usdc",
+    "what's my sol balance?",
+    "quote 0.1 sol to usdc",
+  ],
+  Marinade: [
+    "current marinade staking apy",
+    "help me stake 0.1 sol to msol",
+    "what's my sol balance?",
+  ],
+  "Pump.fun": [
+    "what's my sol balance?",
+    "launch a token called Halo with 1m supply",
+  ],
+  Kamino: [
+    "what's my sol balance?",
+    "highest stablecoin yields above $10m tvl",
+  ],
+};
 
 type SwapToolOutput = { preview: SwapPreview; txBase64: string };
 type TransferToolOutput = { preview: TransferPreview; txBase64: string };
@@ -51,6 +80,13 @@ function loadStored(): UIMessage[] {
   }
 }
 
+function suggestedPrompts(protocol: string | null): string[] {
+  if (protocol && PROMPTS_BY_PROTOCOL[protocol]) {
+    return PROMPTS_BY_PROTOCOL[protocol];
+  }
+  return DEFAULT_PROMPTS;
+}
+
 export function Chat({
   walletAddress,
   pageContext,
@@ -60,16 +96,11 @@ export function Chat({
 }) {
   const [input, setInput] = useState("");
 
-  // Wallet ref pattern — same as the main web app's chat.tsx. The transport
-  // is built once; its body function reads from this ref every request,
-  // so wallet (re)connection mid-conversation is reflected immediately.
   const walletAddressRef = useRef<string | null>(walletAddress);
   useEffect(() => {
     walletAddressRef.current = walletAddress;
   }, [walletAddress]);
 
-  // Same ref pattern for page context — updates every time the user
-  // switches tabs or navigates within a tab.
   const pageContextRef = useRef<PageContext>(pageContext);
   useEffect(() => {
     pageContextRef.current = pageContext;
@@ -102,24 +133,24 @@ export function Chat({
   }, [messages]);
 
   const isStreaming = status === "submitted" || status === "streaming";
+  const prompts = suggestedPrompts(pageContext.protocol);
 
-  // Auto-scroll to the bottom when messages change or streaming starts.
   const bottomRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, isStreaming]);
 
+  function send(text: string) {
+    if (isStreaming) return;
+    sendMessage({ text });
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
     if (!text || isStreaming) return;
-    sendMessage({ text });
+    send(text);
     setInput("");
-  }
-
-  function onSuggestion(text: string) {
-    if (isStreaming) return;
-    sendMessage({ text });
   }
 
   function clearChat() {
@@ -127,222 +158,222 @@ export function Chat({
     localStorage.removeItem(STORAGE_KEY);
   }
 
+  const canSend = !isStreaming && input.trim().length > 0;
+
   return (
-    <div className="flex flex-col h-full bg-black/40 rounded-2xl border border-white/10 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+    <div className="flex h-full flex-col">
+      <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-5 text-center animate-in fade-in zoom-in duration-500">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.15)]">
-              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
+          <div className="flex h-full flex-col items-center justify-center gap-6 px-4 py-8 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-900 text-white">
+                <SparkleIcon />
+              </div>
+              <div className="space-y-1">
+                <h2 className="font-display text-[20px] font-semibold tracking-tight text-gray-900">
+                  what can i help you with?
+                </h2>
+                <p className="text-[12px] text-gray-500">
+                  {pageContext.protocol
+                    ? `embedded on ${pageContext.protocol}.`
+                    : "embedded ai for crypto protocols."}
+                </p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-[13px] font-semibold text-gray-100">
-                Welcome to Signal
-              </p>
-              <p className="text-[11px] text-gray-500">
-                {walletAddress
-                  ? "Wallet connected. Try anything below."
-                  : "Connect Phantom for balance & signing — or ask anything."}
-              </p>
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              {SUGGESTED_PROMPTS.map((p) => (
+            <div className="flex w-full flex-col gap-2">
+              {prompts.map((p) => (
                 <button
                   key={p}
-                  onClick={() => onSuggestion(p)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-gray-300 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-white transition text-left"
+                  type="button"
+                  onClick={() => send(p)}
+                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-left text-[12px] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100"
                 >
                   {p}
                 </button>
               ))}
             </div>
           </div>
-        ) : null}
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={
-              "flex animate-in fade-in slide-in-from-bottom-1 duration-300 " +
-              (m.role === "user" ? "justify-end" : "justify-start")
-            }
-          >
-            <div
-              className={
-                "min-w-0 max-w-[92%] space-y-2 rounded-xl px-3 py-2 text-[13px] leading-relaxed break-words overflow-hidden " +
-                (m.role === "user"
-                  ? "bg-blue-600 text-white whitespace-pre-wrap"
-                  : "bg-white/5 border border-white/10 text-gray-100")
-              }
-            >
-              {m.parts.map((part, i) => {
-                if (part.type === "text") {
-                  return (
-                    <div key={i} className="block">
-                      <Markdown>{part.text}</Markdown>
-                    </div>
-                  );
+        ) : (
+          <div className="space-y-5 px-4 py-5 pb-28">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={
+                  "flex w-full " + (m.role === "user" ? "justify-end" : "justify-start")
                 }
-
-                if (isToolUIPart(part)) {
-                  const name = getToolName(part);
-
-                  if (part.state === "output-error") {
-                    return (
-                      <div
-                        key={i}
-                        className="my-1 inline-block rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 font-mono text-[10px] text-red-300 break-all"
-                      >
-                        ❌ {name} failed
-                        {part.errorText ? `: ${part.errorText}` : ""}
-                      </div>
-                    );
+              >
+                <div
+                  className={
+                    "min-w-0 max-w-[92%] space-y-2 break-words " +
+                    (m.role === "user"
+                      ? "rounded-3xl rounded-tr-md bg-gray-900 px-3.5 py-2 text-[13px] leading-relaxed text-white whitespace-pre-wrap"
+                      : "text-[13px] leading-relaxed text-gray-900")
                   }
+                >
+                  {m.parts.map((part, i) => {
+                    if (part.type === "text") {
+                      return (
+                        <div key={i} className="block">
+                          <Markdown>{part.text}</Markdown>
+                        </div>
+                      );
+                    }
 
-                  if (
-                    name === "prepareJupiterSwap" &&
-                    part.state === "output-available"
-                  ) {
-                    const out = part.output as SwapToolOutput;
-                    return (
-                      <SwapApprovalCard
-                        key={i}
-                        preview={out.preview}
-                        txBase64={out.txBase64}
-                        onConfirmed={(sig) =>
-                          sendMessage({ text: `Tx confirmed: ${sig}` })
-                        }
-                        onRejected={(reason) => sendMessage({ text: reason })}
-                      />
-                    );
-                  }
+                    if (isToolUIPart(part)) {
+                      const name = getToolName(part);
 
-                  if (
-                    name === "prepareSolTransfer" &&
-                    part.state === "output-available"
-                  ) {
-                    const out = part.output as TransferToolOutput;
-                    return (
-                      <TransferApprovalCard
-                        key={i}
-                        preview={out.preview}
-                        txBase64={out.txBase64}
-                        onConfirmed={(sig) =>
-                          sendMessage({ text: `Tx confirmed: ${sig}` })
-                        }
-                        onRejected={(reason) => sendMessage({ text: reason })}
-                      />
-                    );
-                  }
+                      if (part.state === "output-error") {
+                        return (
+                          <div
+                            key={i}
+                            className="my-2 inline-flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 font-mono text-[10px] text-red-700"
+                          >
+                            <ErrorIcon className="h-3.5 w-3.5 flex-shrink-0 text-red-500" />
+                            <span className="break-all">
+                              {name} failed
+                              {part.errorText ? `: ${part.errorText}` : ""}
+                            </span>
+                          </div>
+                        );
+                      }
 
-                  // Phase 10a — deep-link card for leveraged yield loops.
-                  if (
-                    name === "prepareYieldLoopLink" &&
-                    part.state === "output-available"
-                  ) {
-                    return (
-                      <YieldLoopCard
-                        key={i}
-                        link={part.output as YieldLoopLink}
-                      />
-                    );
-                  }
+                      if (
+                        name === "prepareJupiterSwap" &&
+                        part.state === "output-available"
+                      ) {
+                        const out = part.output as SwapToolOutput;
+                        return (
+                          <SwapApprovalCard
+                            key={i}
+                            preview={out.preview}
+                            txBase64={out.txBase64}
+                            onConfirmed={(sig) =>
+                              sendMessage({ text: `Tx confirmed: ${sig}` })
+                            }
+                            onRejected={(reason) => sendMessage({ text: reason })}
+                          />
+                        );
+                      }
 
-                  // Phase 10b — SPL token launch (dual-sign: wallet + mint kp).
-                  if (
-                    name === "prepareTokenLaunch" &&
-                    part.state === "output-available"
-                  ) {
-                    const out = part.output as TokenLaunchToolOutput;
-                    return (
-                      <TokenLaunchApprovalCard
-                        key={i}
-                        preview={out.preview}
-                        txBase64={out.txBase64}
-                        mintSecret={out.mintSecret}
-                        onConfirmed={(sig) =>
-                          sendMessage({ text: `Token launched: ${sig}` })
-                        }
-                        onRejected={(reason) => sendMessage({ text: reason })}
-                      />
-                    );
-                  }
+                      if (
+                        name === "prepareSolTransfer" &&
+                        part.state === "output-available"
+                      ) {
+                        const out = part.output as TransferToolOutput;
+                        return (
+                          <TransferApprovalCard
+                            key={i}
+                            preview={out.preview}
+                            txBase64={out.txBase64}
+                            onConfirmed={(sig) =>
+                              sendMessage({ text: `Tx confirmed: ${sig}` })
+                            }
+                            onRejected={(reason) => sendMessage({ text: reason })}
+                          />
+                        );
+                      }
 
-                  const running =
-                    part.state === "input-streaming" ||
-                    part.state === "input-available";
-                  return (
-                    <div
-                      key={i}
-                      className="my-1 inline-flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 font-mono text-[10px] text-gray-300"
-                    >
-                      {running ? (
-                        <div className="w-3 h-3 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
-                      ) : (
-                        <svg
-                          className="w-3 h-3 text-emerald-400"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                      if (
+                        name === "prepareYieldLoopLink" &&
+                        part.state === "output-available"
+                      ) {
+                        return (
+                          <YieldLoopCard
+                            key={i}
+                            link={part.output as YieldLoopLink}
+                          />
+                        );
+                      }
+
+                      if (
+                        name === "prepareTokenLaunch" &&
+                        part.state === "output-available"
+                      ) {
+                        const out = part.output as TokenLaunchToolOutput;
+                        return (
+                          <TokenLaunchApprovalCard
+                            key={i}
+                            preview={out.preview}
+                            txBase64={out.txBase64}
+                            mintSecret={out.mintSecret}
+                            onConfirmed={(sig) =>
+                              sendMessage({ text: `Token launched: ${sig}` })
+                            }
+                            onRejected={(reason) => sendMessage({ text: reason })}
+                          />
+                        );
+                      }
+
+                      const running =
+                        part.state === "input-streaming" ||
+                        part.state === "input-available";
+                      return (
+                        <div
+                          key={i}
+                          className="my-2 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-1 font-mono text-[10px] text-gray-600"
                         >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                      <span>
-                        {running ? "Running" : "Done"} ·{" "}
-                        <span className="text-white">{name}</span>
-                      </span>
-                    </div>
-                  );
-                }
+                          {running ? (
+                            <Spinner />
+                          ) : (
+                            <CheckIcon className="text-emerald-500" />
+                          )}
+                          <span>
+                            {running ? "Running" : "Done"} ·{" "}
+                            <span className="text-gray-900">{name}</span>
+                          </span>
+                        </div>
+                      );
+                    }
 
-                return null;
-              })}
-            </div>
+                    return null;
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {error && (
+              <div className="flex justify-center">
+                <div className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] text-red-700">
+                  {error.message}
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} aria-hidden />
           </div>
-        ))}
-        {error && (
-          <p className="text-xs text-red-400 break-words">
-            Error: {error.message}
-          </p>
         )}
-        {/* Scroll anchor — keeps new content in view as messages stream. */}
-        <div ref={bottomRef} aria-hidden />
       </div>
-      <form
-        onSubmit={onSubmit}
-        className="border-t border-white/10 p-2 flex items-center gap-2"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Signal…"
-          className="flex-1 min-w-0 rounded-md border border-white/10 bg-transparent px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isStreaming}
-        />
-        <button
-          type="submit"
-          disabled={isStreaming || !input.trim()}
-          className="rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
-        >
-          {isStreaming ? "…" : "Send"}
-        </button>
+
+      <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 pb-3 pt-2">
+        <form onSubmit={onSubmit} className="flex items-center gap-2">
+          <div className="flex w-full min-w-0 items-center gap-1.5 rounded-full border border-gray-200 bg-white pl-4 pr-1 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-within:border-gray-300">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask anything"
+              disabled={isStreaming}
+              className="min-w-0 flex-1 bg-transparent py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            />
+            <button
+              type="submit"
+              aria-label={isStreaming ? "Streaming" : "Send"}
+              disabled={!canSend}
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-white transition active:scale-95 disabled:opacity-30"
+            >
+              {isStreaming ? <TypingDots /> : <ArrowUpIcon />}
+            </button>
+          </div>
+        </form>
         {messages.length > 0 && (
           <button
             type="button"
             onClick={clearChat}
             disabled={isStreaming}
-            title="Clear conversation"
-            className="rounded-md border border-white/10 px-2 py-2 text-[10px] text-gray-400 hover:text-gray-200 disabled:opacity-50"
+            className="mt-1.5 w-full text-center text-[10px] text-gray-400 hover:text-gray-600 disabled:opacity-50"
           >
-            Clear
+            Clear conversation
           </button>
         )}
-      </form>
+      </div>
     </div>
   );
 }

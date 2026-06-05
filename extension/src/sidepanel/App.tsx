@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Chat } from "./Chat";
 import { AlertsBell } from "./AlertsBell";
+import { ChevronRightIcon } from "./icons";
 import { usePhantom } from "@/lib/usePhantom";
 import { usePageContext } from "@/lib/usePageContext";
 import { setWatchedAddress } from "@/lib/watches";
@@ -13,89 +14,119 @@ export function App() {
   const { publicKey, connecting, error, hasPhantom, connect, disconnect } =
     usePhantom();
   const pageContext = usePageContext();
+  const [walletMenuOpen, setWalletMenuOpen] = useState(false);
 
-  // Tell the background watcher which address to track. Switching wallets
-  // resets the lamport baseline so we don't fire a phantom "balance changed"
-  // alert just because we connected a different wallet.
   useEffect(() => {
     void setWatchedAddress(publicKey);
   }, [publicKey]);
 
-  // Ask the background to run a balance check immediately when the side
-  // panel opens. Gives the user fast feedback without waiting for the
-  // next 2-minute alarm tick.
   useEffect(() => {
     if (!publicKey) return;
-    chrome.runtime
-      .sendMessage({ type: "signal:checkNow" })
-      .catch(() => {
-        // Service worker may be cold-starting; the next alarm will catch it.
-      });
+    chrome.runtime.sendMessage({ type: "signal:checkNow" }).catch(() => {});
   }, [publicKey]);
 
-  return (
-    <div className="flex flex-col h-full p-3 gap-3 bg-black text-gray-100">
-      <header className="flex items-center gap-2 px-1">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500" />
-        <h1 className="text-sm font-semibold tracking-tight">Signal</h1>
+  function onWalletPillClick() {
+    if (!publicKey) void connect();
+    else setWalletMenuOpen((v) => !v);
+  }
 
-        <div className="ml-auto flex items-center gap-2">
+  function onCopyAddress() {
+    if (publicKey) navigator.clipboard.writeText(publicKey);
+    setWalletMenuOpen(false);
+  }
+
+  function onDisconnect() {
+    void disconnect();
+    setWalletMenuOpen(false);
+  }
+
+  return (
+    <div className="flex h-full flex-col bg-white text-gray-900">
+      <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-gray-100 px-4">
+        <span className="text-[14px] font-medium tracking-wide text-gray-900">
+          signal
+        </span>
+
+        <div className="flex items-center gap-1">
           <AlertsBell />
-          {publicKey ? (
-            <>
-              <span
-                className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-mono text-gray-200"
-                title={publicKey}
-              >
-                {truncate(publicKey)}
-              </span>
-              <button
-                onClick={() => void disconnect()}
-                className="rounded-md border border-white/10 px-2 py-1 text-[10px] text-gray-400 hover:text-gray-200"
-              >
-                Disconnect
-              </button>
-            </>
-          ) : (
+
+          <div className="relative">
             <button
-              onClick={() => void connect()}
+              type="button"
+              onClick={onWalletPillClick}
               disabled={connecting}
-              className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-medium text-white disabled:opacity-50"
+              className="group flex items-center gap-2 rounded-full px-2.5 py-1.5 hover:bg-gray-100 disabled:opacity-50"
             >
-              {connecting ? "Connecting…" : "Connect Phantom"}
+              <span
+                className={
+                  "h-1.5 w-1.5 rounded-full " +
+                  (publicKey ? "bg-emerald-500" : "bg-gray-300")
+                }
+                aria-hidden
+              />
+              {publicKey ? (
+                <span className="font-mono text-[10px] text-gray-500">
+                  {truncate(publicKey)}
+                </span>
+              ) : (
+                <span className="text-[11px] text-gray-400">
+                  {connecting ? "connecting…" : "connect"}
+                </span>
+              )}
+              <ChevronRightIcon className="h-3 w-3 text-gray-300 group-hover:text-gray-500" />
             </button>
-          )}
+
+            {walletMenuOpen && publicKey && (
+              <div className="absolute right-0 z-50 mt-1 w-44 rounded-xl border border-gray-100 bg-white p-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={onCopyAddress}
+                  className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-gray-700 hover:bg-gray-50"
+                >
+                  Copy address
+                </button>
+                <button
+                  type="button"
+                  onClick={onDisconnect}
+                  className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-red-600 hover:bg-red-50"
+                >
+                  Disconnect
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       {pageContext.protocol && (
         <div
-          className="mx-1 flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200"
+          className="mx-4 mt-2 flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] text-gray-600"
           title={pageContext.url ?? undefined}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+          <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500" />
           <span>
-            Viewing <strong>{pageContext.protocol}</strong>
+            on <strong className="font-medium text-gray-800">{pageContext.protocol}</strong>
           </span>
-          <span className="ml-auto font-mono text-blue-300/60 truncate max-w-[140px]">
-            {pageContext.host}
-          </span>
+          {pageContext.host && (
+            <span className="ml-auto truncate font-mono text-[10px] text-gray-400 max-w-[120px]">
+              {pageContext.host}
+            </span>
+          )}
         </div>
       )}
 
       {!hasPhantom && (
-        <div className="mx-1 rounded-md border border-yellow-500/30 bg-yellow-500/5 px-2 py-1.5 text-[10px] text-yellow-200">
-          Phantom not detected on this page. Open a regular https:// site
-          and reload it, then try Connect again.
+        <div className="mx-4 mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+          Phantom not detected. Open an https:// page, reload, then connect.
         </div>
       )}
       {error && (
-        <div className="mx-1 rounded-md border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-[10px] text-red-200 break-words">
+        <div className="mx-4 mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 break-words">
           {error}
         </div>
       )}
 
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         <Chat walletAddress={publicKey} pageContext={pageContext} />
       </div>
     </div>
