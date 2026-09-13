@@ -61,27 +61,24 @@ export default function Home() {
 
       {/* Hero */}
       <section
-        className="relative w-full shrink-0 overflow-hidden pt-10 text-center sm:pt-14"
+        className="relative w-full shrink-0 overflow-hidden pt-16 text-center sm:pt-20"
         style={{ height: "calc(100svh - 4rem)" }}
       >
         <div className="relative z-10 mx-auto max-w-3xl px-6">
-          <div className="mx-auto mb-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 text-white">
-            <Sparkle className="h-7 w-7" />
-          </div>
           <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
             embedded ai in all crypto protocols
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-[16px] leading-relaxed text-gray-500">
-            signal puts an ai agent right inside your browser — aware of the
-            protocol you&apos;re on, ready to find yields, swap, transfer, and
-            sign. embedded in the interaction, not bolted on beside it.
+            an ambient layer (extension or browser) embedded into crypto
+            protocols that suggests defi strategies, launches assets, and
+            executes on-chain actions in-flow
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               href="/chat"
               className="rounded-full bg-gray-900 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-gray-800 active:scale-[0.98]"
             >
-              start chatting →
+              try 0.1 version →
             </Link>
             <a
               href="#problem"
@@ -105,29 +102,38 @@ export default function Home() {
 
       <section
         id="problem"
-        className="mx-auto flex w-full max-w-3xl flex-col gap-16 px-6 py-20 sm:py-28"
+        className="w-full px-6 py-20 sm:py-28"
       >
-        <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight">
-            problem to solve
-          </h2>
-          <p className="mt-5 text-[16px] leading-relaxed text-gray-500">
-            just like all current SaaS like figma or shopify, most crypto
-            protocols would start being more ai-native. ai should be contextual,
-            ambient, and proactive; right in the flow of your trade or crypto
-            actions.
-          </p>
-        </div>
-        <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight">
-            possible solution
-          </h2>
-          <p className="mt-5 text-[16px] leading-relaxed text-gray-500">
-            an ambient layer (extension/browser) embedded across crypto protocols
-            that understands your intent: suggesting defi strategies (like yield
-            looping), launching assets, and executing any on-chain action directly
-            in your workflow that makes it feel infinite without sounding messy.
-          </p>
+        <div className="mx-auto w-full max-w-4xl">
+          <article className="pb-16 sm:pb-20">
+            <p className="font-mono text-xs tracking-widest text-gray-400">
+              01 / problem
+            </p>
+            <h2 className="mt-5 font-display text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
+              problem to solve
+            </h2>
+            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-gray-600 sm:text-xl">
+              just like all current SaaS like figma or shopify, most crypto
+              protocols would start being more ai-native. ai should be contextual,
+              ambient, and proactive; right in the flow of your trade or crypto
+              actions.
+            </p>
+          </article>
+
+          <article className="border-t border-gray-200 pt-16 sm:pt-20">
+            <p className="font-mono text-xs tracking-widest text-gray-400">
+              02 / solution
+            </p>
+            <h2 className="mt-5 font-display text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
+              possible solution
+            </h2>
+            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-gray-600 sm:text-xl">
+              an ambient layer (extension/browser) embedded across crypto protocols
+              that understands your intent: suggesting defi strategies (like yield
+              looping), launching assets, and executing any on-chain action directly
+              in your workflow that makes it feel infinite without sounding messy.
+            </p>
+          </article>
         </div>
       </section>
 
